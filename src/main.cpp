@@ -43,10 +43,9 @@ int main(int argc, char** argv)
     pdet.onSetup();
     pdet.onConfigure(1);
 
-    for (;;) {
-        RTLIB_ExitCode_t rc = pdet.onRun();
-        if (rc == 2)
-            break;
-    }
+    RTLIB_ExitCode_t rc;
+    do {
+        rc = pdet.onRun();
+    } while (rc == RTLIB_OK);
 	return 0;
 }

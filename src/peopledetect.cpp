@@ -61,7 +61,7 @@ RTLIB_ExitCode_t PeopleDetect::onSetup()
         cout << "Can not open video stream: '"
              << (filename_.empty() ? "<camera>" : filename_)
              << "'" << endl;
-        return 2;
+        return RTLIB_EXC_WORKLOAD_NONE;
     }
     cout << "Press 'q' or <ESC> to quit." << endl;
     cout << "Press <space> to toggle between Default and Daimler detector" << endl;
@@ -78,7 +78,7 @@ RTLIB_ExitCode_t PeopleDetect::onRun()
     if (frame_.empty())
     {
         cout << "Finished reading: empty frame" << endl;
-        return 2;
+        return RTLIB_EXC_WORKLOAD_NONE;
     }
     int64 t = getTickCount();
     vector<Rect> found = detector_.detect(frame_);
@@ -101,13 +101,13 @@ RTLIB_ExitCode_t PeopleDetect::onRun()
     const char key = (char)waitKey(16);
     if (key == 27 || key == 'q') // ESC
     {
-        return 2;
+        return RTLIB_EXC_WORKLOAD_NONE;
     }
     else if (key == ' ')
     {
         detector_.toggleMode();
     }
-    return 1;
+    return RTLIB_OK;
 }
 
 RTLIB_ExitCode_t PeopleDetect::onMonitor()

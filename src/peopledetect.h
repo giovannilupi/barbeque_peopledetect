@@ -7,7 +7,8 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/videoio.hpp>
 
-using RTLIB_ExitCode_t = int;
+#include <bbque/bbque_exc.h>
+
 
 class BbqueEXC {
 public:
