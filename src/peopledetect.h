@@ -8,16 +8,7 @@
 #include <opencv2/videoio.hpp>
 
 #include <bbque/bbque_exc.h>
-
-
-class BbqueEXC {
-public:
-    virtual RTLIB_ExitCode_t onSetup() {}
-    virtual RTLIB_ExitCode_t onConfigure(int8_t awm_id) {}
-    virtual RTLIB_ExitCode_t onRun() {}
-    virtual RTLIB_ExitCode_t onMonitor() {}
-    virtual RTLIB_ExitCode_t onSuspend() {}
-};
+#include <string>
 
 class Detector {
     enum Mode { Default, Daimler } m;
@@ -31,7 +22,7 @@ public:
     void adjustRect(cv::Rect & r) const;
 };
 
-class PeopleDetect: public BbqueEXC {
+class PeopleDetect : public bbque::rtlib::BbqueEXC {
     std::string filename_;
     cv::VideoCapture cap_;
     int camera_;
@@ -39,7 +30,10 @@ class PeopleDetect: public BbqueEXC {
     cv::Mat frame_;
 
 public:
-    PeopleDetect(int camera, std::string filename);
+    PeopleDetect(std::string const &name,
+                 std::string const &recipe,
+                 RTLIB_Services_t *rtlib,
+                 int camera, std::string filename);
     virtual ~PeopleDetect();
     RTLIB_ExitCode_t onSetup();
     RTLIB_ExitCode_t onConfigure(int8_t awm_id);

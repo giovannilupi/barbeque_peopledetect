@@ -9,6 +9,7 @@
 #include <opencv2/videoio.hpp>
 #include <iostream>
 #include <iomanip>
+#include <memory>
 #include "peopledetect.h"
 
 using namespace cv;
@@ -38,14 +39,28 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-    PeopleDetect pdet(camera, file);
+    RTLIB_Services_t *rtlib;
+    auto ret = RTLIB_Init(basename(argv[0]), &rtlib);
+    if (ret != RTLIB_OK) {
+        cerr << "ERROR: Unable to init RTLib (Did you start the BarbequeRTRM daemon?)" << endl;
+        return RTLIB_ERROR;
+    }
+    assert(rtlib);
 
-    pdet.onSetup();
-    pdet.onConfigure(1);
+    std::string recipe("peopledetect");
+    cout << "INFO: Registering EXC with recipe " << recipe << endl;
+    auto pexc = std::make_shared<PeopleDetect>("PeopleDetect", recipe, rtlib, camera, file);
+    if (!pexc->isRegistered()) {
+        cerr << "ERROR: Register failed (missing the recipe file?)" << endl;
+        return RTLIB_ERROR;
+    }
 
-    RTLIB_ExitCode_t rc;
-    do {
-        rc = pdet.onRun();
-    } while (rc == RTLIB_OK);
-	return 0;
+    cout << "INFO: Starting EXC control thread " << endl;
+    pexc->Start();
+
+    cout << "INFO: Waiting for the EXC termination " << endl;
+    pexc->WaitCompletion();
+
+    cout << "INFO: Terminated. " << endl;
+    return EXIT_SUCCESS;
 }

@@ -35,7 +35,12 @@ void Detector::adjustRect(Rect & r) const
     r.height = cvRound(r.height*0.8);
 }
 
-PeopleDetect::PeopleDetect(int camera, std::string filename) :
+PeopleDetect::PeopleDetect(std::string const &name,
+                           std::string const &recipe,
+                           RTLIB_Services_t *rtlib,
+                           int camera,
+                           std::string filename) :
+    BbqueEXC(name, recipe, rtlib, RTLIB_LANG_CPP),
     camera_(camera),
     filename_(filename)
 {
