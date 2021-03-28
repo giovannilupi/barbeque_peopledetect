@@ -49,7 +49,9 @@ int main(int argc, char** argv)
 
     std::string recipe("peopledetect");
     cout << "INFO: Registering EXC with recipe " << recipe << endl;
-    auto pexc = std::make_shared<PeopleDetect>("PeopleDetect", recipe, rtlib, camera, file);
+
+    unique_ptr<bbque::rtlib::BbqueEXC> pexc(new PeopleDetect("PeopleDetect", recipe, rtlib, camera, file));
+
     if (!pexc->isRegistered()) {
         cerr << "ERROR: Register failed (missing the recipe file?)" << endl;
         return RTLIB_ERROR;

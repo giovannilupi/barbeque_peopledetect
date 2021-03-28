@@ -32,6 +32,8 @@ install(DIRECTORY "${PROJECT_SOURCE_DIR}/recipes/"
         DESTINATION "${CMAKE_INSTALL_PREFIX}/etc/bbque/recipes"
         FILES_MATCHING PATTERN "*.recipe")
 
+add_custom_target(recipes SOURCES "recipes/peopledetect.recipe")
+
 ################################################################################
 # Configuration resume
 ################################################################################

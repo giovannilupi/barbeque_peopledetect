@@ -70,11 +70,25 @@ RTLIB_ExitCode_t PeopleDetect::onSetup()
     }
     cout << "Press 'q' or <ESC> to quit." << endl;
     cout << "Press <space> to toggle between Default and Daimler detector" << endl;
+    return RTLIB_OK;
 }
 
 RTLIB_ExitCode_t PeopleDetect::onConfigure(int8_t awm_id)
 {
+    int32_t proc_nr;    // nr. of CPU cores
+    int32_t proc_quota; // CPU quota (e.g. quota = 235% -> 3 CPU cores)
+    int32_t acc, gpu;
 
+    GetAssignedResources(PROC_ELEMENT, proc_quota);
+    GetAssignedResources(PROC_NR, proc_nr);
+    GetAssignedResources(GPU, acc);
+    GetAssignedResources(ACCELERATOR, acc);
+
+    cout << "PeopleDetect::onConfigure(): proc_nr= " << proc_nr << endl;
+    cout << "PeopleDetect::onConfigure(): proc_quota= " << proc_quota << endl;
+    cout << "PeopleDetect::onConfigure(): acc= " << acc << endl;
+    cout << "PeopleDetect::onConfigure(): gpu= " << gpu << endl;
+    return RTLIB_OK;
 }
 
 RTLIB_ExitCode_t PeopleDetect::onRun()
@@ -112,15 +126,18 @@ RTLIB_ExitCode_t PeopleDetect::onRun()
     {
         detector_.toggleMode();
     }
+    cout << "PeopleDetect::onRun(): Hello AEM! cycle="<< Cycles() << endl;
     return RTLIB_OK;
 }
 
 RTLIB_ExitCode_t PeopleDetect::onMonitor()
 {
-
+    cout << "PeopleDetect::onMonitor(): CPS=" << GetCPS() << endl;
+    return RTLIB_OK;
 }
 
 RTLIB_ExitCode_t PeopleDetect::onSuspend()
 {
-
+    cout << "PeopleDetect::onSuspend(): CPS=" << GetCPS() << endl;
+    return RTLIB_OK;
 }
