@@ -73,22 +73,55 @@ RTLIB_ExitCode_t PeopleDetect::onSetup()
     return RTLIB_OK;
 }
 
+/*!
+ * \brief PeopleDetect::onConfigure
+ *
+ * Called each time BarbequeRTRM assigns a new Application Working Mode
+ * (AWM) to the application
+ *
+ * \param awm_id the ID of the currently assigned AWM
+ * \return RTLIB_OK on success
+ */
 RTLIB_ExitCode_t PeopleDetect::onConfigure(int8_t awm_id)
 {
     int32_t proc_nr;    // nr. of CPU cores
     int32_t proc_quota; // CPU quota (e.g. quota = 235% -> 3 CPU cores)
     int32_t acc, gpu;
+    int32_t sys,mem;
 
+    GetAssignedResources(SYSTEM, sys);
     GetAssignedResources(PROC_ELEMENT, proc_quota);
     GetAssignedResources(PROC_NR, proc_nr);
     GetAssignedResources(GPU, acc);
     GetAssignedResources(ACCELERATOR, acc);
+    GetAssignedResources(MEMORY, mem);
 
+    cout << "PeopleDetect::onConfigure(): awm id= " << static_cast<int>(awm_id) << endl;
+    cout << "PeopleDetect::onConfigure(): system= " << sys << endl;
     cout << "PeopleDetect::onConfigure(): proc_nr= " << proc_nr << endl;
     cout << "PeopleDetect::onConfigure(): proc_quota= " << proc_quota << endl;
     cout << "PeopleDetect::onConfigure(): acc= " << acc << endl;
     cout << "PeopleDetect::onConfigure(): gpu= " << gpu << endl;
+    cout << "PeopleDetect::onConfigure(): memory= " << mem << endl;
     return RTLIB_OK;
+}
+
+void PeopleDetect::show_frame(vector<Rect> &found, int64 elapsed_millis)
+{
+    {
+        ostringstream buf;
+        buf << "Mode: " << detector_.modeName() << " ||| "
+            << "FPS: " << fixed << setprecision(1) << (getTickFrequency() / (double)elapsed_millis);
+        putText(frame_, buf.str(), Point(10, 30), FONT_HERSHEY_PLAIN, 2.0, Scalar(0, 0, 255), 2, LINE_AA);
+    }
+    for (vector<Rect>::iterator i = found.begin(); i != found.end(); ++i)
+    {
+        Rect &r = *i;
+        detector_.adjustRect(r);
+        rectangle(frame_, r.tl(), r.br(), cv::Scalar(0, 255, 0), 2);
+    }
+
+    imshow("People detector", frame_);
 }
 
 RTLIB_ExitCode_t PeopleDetect::onRun()
@@ -103,20 +136,9 @@ RTLIB_ExitCode_t PeopleDetect::onRun()
     vector<Rect> found = detector_.detect(frame_);
     t = getTickCount() - t;
     // show the window
-    {
-        ostringstream buf;
-        buf << "Mode: " << detector_.modeName() << " ||| "
-            << "FPS: " << fixed << setprecision(1) << (getTickFrequency() / (double)t);
-        putText(frame_, buf.str(), Point(10, 30), FONT_HERSHEY_PLAIN, 2.0, Scalar(0, 0, 255), 2, LINE_AA);
-    }
-    for (vector<Rect>::iterator i = found.begin(); i != found.end(); ++i)
-    {
-        Rect &r = *i;
-        detector_.adjustRect(r);
-        rectangle(frame_, r.tl(), r.br(), cv::Scalar(0, 255, 0), 2);
-    }
-    imshow("People detector", frame_);
+    show_frame(found, t);
     // interact with user
+
     const char key = (char)waitKey(16);
     if (key == 27 || key == 'q') // ESC
     {
@@ -126,7 +148,7 @@ RTLIB_ExitCode_t PeopleDetect::onRun()
     {
         detector_.toggleMode();
     }
-    cout << "PeopleDetect::onRun(): Hello AEM! cycle="<< Cycles() << endl;
+    //cout << "PeopleDetect::onRun(): Hello AEM! cycle="<< Cycles() << endl;
     return RTLIB_OK;
 }
 

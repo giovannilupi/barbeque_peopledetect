@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <BarbequeRTRM recipe_version="0.8">
-	<application priority="4">
+        <application name="peopledetect" priority="4">
 		<platform id="bq.*">
 			<awms>
 				<awm id="0" name="Low" value="50">

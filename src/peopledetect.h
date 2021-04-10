@@ -29,17 +29,19 @@ class PeopleDetect : public bbque::rtlib::BbqueEXC {
     Detector detector_;
     cv::Mat frame_;
 
+    void show_frame(std::vector<cv::Rect> &found, int64 elapsed_millis);
+
 public:
     PeopleDetect(std::string const &name,
                  std::string const &recipe,
                  RTLIB_Services_t *rtlib,
                  int camera, std::string filename);
     virtual ~PeopleDetect();
-    RTLIB_ExitCode_t onSetup();
-    RTLIB_ExitCode_t onConfigure(int8_t awm_id);
-    RTLIB_ExitCode_t onRun();
-    RTLIB_ExitCode_t onMonitor();
-    RTLIB_ExitCode_t onSuspend();
+    virtual RTLIB_ExitCode_t onSetup() override;
+    virtual RTLIB_ExitCode_t onConfigure(int8_t awm_id) override;
+    virtual RTLIB_ExitCode_t onRun() override;
+    virtual RTLIB_ExitCode_t onMonitor() override;
+    virtual RTLIB_ExitCode_t onSuspend() override;
 };
 
 #endif
