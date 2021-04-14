@@ -23,7 +23,7 @@ static const string keys = "{ help h   |   | print help message }"
 int main(int argc, char** argv)
 {
 	CommandLineParser parser(argc, argv, keys);
-	parser.about("This sample demonstrates the use of the HoG descriptor.");
+    parser.about("This sample demonstrates the use of OpenCV.");
 	if (parser.has("help"))
 	{
 		parser.printMessage();
@@ -31,7 +31,7 @@ int main(int argc, char** argv)
 	}
 	int camera = parser.get<int>("camera");
 	string file = parser.get<string>("video");
-    //file = "/home/giovanni/Video/jf.mp4";
+    //file = "/home/giovanni/Work/BOSP-devel/peopledetect/peopledetect.bbque/resources/sample2.mp4";
 	cout << "file: " << file << endl;
 	if (!parser.check())
 	{

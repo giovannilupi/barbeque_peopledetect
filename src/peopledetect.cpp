@@ -12,7 +12,7 @@ Detector::Detector() : m(Default), hog(), hog_d(Size(48, 96), Size(16, 16), Size
     hog_d.setSVMDetector(HOGDescriptor::getDaimlerPeopleDetector());
 }
 
-vector<Rect> Detector::detect(InputArray img)
+vector<Rect> Detector::detect(InputArray &img)
 {
     // Run the detector with default parameters. to get a higher hit-rate
     // (and more false alarms, respectively), decrease the hitThreshold and
@@ -89,12 +89,18 @@ RTLIB_ExitCode_t PeopleDetect::onConfigure(int8_t awm_id)
     int32_t acc, gpu;
     int32_t sys,mem;
 
-    GetAssignedResources(SYSTEM, sys);
-    GetAssignedResources(PROC_ELEMENT, proc_quota);
-    GetAssignedResources(PROC_NR, proc_nr);
-    GetAssignedResources(GPU, acc);
-    GetAssignedResources(ACCELERATOR, acc);
-    GetAssignedResources(MEMORY, mem);
+    if (GetAssignedResources(SYSTEM, sys) != RTLIB_OK)
+        cerr << "GetAssignedResources(SYSTEM, sys) failed\n";
+    if (GetAssignedResources(PROC_ELEMENT, proc_quota) != RTLIB_OK)
+        cerr << "GetAssignedResources(PROC_ELEMENT, proc_quota) failed\n";
+    if (GetAssignedResources(PROC_NR, proc_nr) != RTLIB_OK)
+        cerr << "GetAssignedResources(PROC_NR, proc_nr) failed\n";
+    if (GetAssignedResources(GPU, gpu) != RTLIB_OK)
+        cerr << "GetAssignedResources(GPU, gpu) failed\n";
+    if (GetAssignedResources(ACCELERATOR, acc) != RTLIB_OK)
+        cerr << "GetAssignedResources(ACCELERATOR, acc) failed\n";
+    if (GetAssignedResources(MEMORY, mem) != RTLIB_OK)
+        cerr << "GetAssignedResources(MEMORY, mem) failed\n";
 
     cout << "PeopleDetect::onConfigure(): awm id= " << static_cast<int>(awm_id) << endl;
     cout << "PeopleDetect::onConfigure(): system= " << sys << endl;
@@ -106,19 +112,21 @@ RTLIB_ExitCode_t PeopleDetect::onConfigure(int8_t awm_id)
     return RTLIB_OK;
 }
 
-void PeopleDetect::show_frame(vector<Rect> &found, int64 elapsed_millis)
+void PeopleDetect::show_frame(vector<Rect> &found, int64 elapsed_ticks)
 {
-    {
-        ostringstream buf;
-        buf << "Mode: " << detector_.modeName() << " ||| "
-            << "FPS: " << fixed << setprecision(1) << (getTickFrequency() / (double)elapsed_millis);
-        putText(frame_, buf.str(), Point(10, 30), FONT_HERSHEY_PLAIN, 2.0, Scalar(0, 0, 255), 2, LINE_AA);
-    }
+    double elapsed_millis = 1000.0 * (double)elapsed_ticks / getTickFrequency();
+
+    ostringstream buf;
+    buf << "Mode: " << detector_.modeName() << " ||| "
+        << "MS/FRAME: " << fixed << setprecision(1) << elapsed_millis;
+        //<< "FPS: " << fixed << setprecision(1) << (getTickFrequency() / (double)elapsed_ticks);
+    putText(frame_, buf.str(), Point(10, 30), FONT_HERSHEY_PLAIN, 2.0, Scalar(0, 0, 255), 2, LINE_AA);
+
     for (vector<Rect>::iterator i = found.begin(); i != found.end(); ++i)
     {
         Rect &r = *i;
         detector_.adjustRect(r);
-        rectangle(frame_, r.tl(), r.br(), cv::Scalar(0, 255, 0), 2);
+        rectangle(frame_, r.tl(), r.br(), cv::Scalar(255, 0, 0), 2);
     }
 
     imshow("People detector", frame_);
@@ -139,7 +147,7 @@ RTLIB_ExitCode_t PeopleDetect::onRun()
     show_frame(found, t);
     // interact with user
 
-    const char key = (char)waitKey(16);
+    const char key = (char)waitKey(1);
     if (key == 27 || key == 'q') // ESC
     {
         return RTLIB_EXC_WORKLOAD_NONE;

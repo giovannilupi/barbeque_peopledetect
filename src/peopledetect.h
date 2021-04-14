@@ -18,7 +18,7 @@ public:
     void toggleMode() { m = (m == Default ? Daimler : Default); }
     std::string modeName() const { return (m == Default ? "Default" : "Daimler"); }
 
-    std::vector<cv::Rect> detect(cv::InputArray img);
+    std::vector<cv::Rect> detect(cv::InputArray &img);
     void adjustRect(cv::Rect & r) const;
 };
 
@@ -29,7 +29,7 @@ class PeopleDetect : public bbque::rtlib::BbqueEXC {
     Detector detector_;
     cv::Mat frame_;
 
-    void show_frame(std::vector<cv::Rect> &found, int64 elapsed_millis);
+    void show_frame(std::vector<cv::Rect> &found, int64 elapsed_ticks);
 
 public:
     PeopleDetect(std::string const &name,

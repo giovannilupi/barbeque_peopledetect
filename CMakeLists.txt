@@ -34,6 +34,8 @@ install(DIRECTORY "${PROJECT_SOURCE_DIR}/recipes/"
 
 add_custom_target(recipes SOURCES "recipes/peopledetect.recipe")
 
+add_custom_target(origsrc SOURCES "origsrc/peopledetect.cpp")
+
 ################################################################################
 # Configuration resume
 ################################################################################
