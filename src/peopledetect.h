@@ -14,6 +14,7 @@ class Detector {
 public:
     enum Mode { Default, Daimler } m;
 private:
+    // Histogram of oriented gradients (HOG)
     cv::HOGDescriptor hog, hog_d;
     int stride_;
     double scale_;

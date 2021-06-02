@@ -28,7 +28,7 @@ public:
 	{
 		// Run the detector with default parameters. to get a higher hit-rate
 		// (and more false alarms, respectively), decrease the hitThreshold and
-		// groupThreshold (set groupThreshold to 0 to turn off the grouping completely).
+        // groupThreshold (set groupThreshold to 0 to turn off the grouping completely).
 		vector<Rect> found;
 		if (m == Default)
 			hog.detectMultiScale(img, found, 0, Size(8,8), Size(), 1.05, 2, false);

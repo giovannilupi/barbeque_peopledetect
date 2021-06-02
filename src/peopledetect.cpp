@@ -7,7 +7,7 @@ using namespace cv;
 using namespace std;
 
 Detector::Detector() :
-    m(Default),
+    m(Daimler),
     hog(),
     hog_d(Size(48, 96),Size(16, 16), Size(8, 8), Size(8, 8), 9),
     stride_(8),
@@ -29,6 +29,15 @@ vector<Rect> Detector::detect(InputArray &img)
     else if (m == Daimler)
         hog_d.detectMultiScale(img, found, 0, Size(8,8), Size(), 1.05, 2, true);
 #else
+    // Note:
+    // - the smaller winStride is, the more windows need to be evaluated
+    // - the larger winStride is the less windows need to be evaluated, but
+    //   if winStride gets too large, then we can easily miss out on detections
+    //   entirely
+    // - a smaller scale will increase the number of layers in the image pyramid
+    //   and increase the amount of time it takes to process the image
+    // - Typical values for scale are normally in the range [1.01, 1.5]
+
     if (m == Default)
         hog.detectMultiScale(img, found, 0, Size(stride_,stride_), Size(), scale_, 2, false);
     else if (m == Daimler)
@@ -81,7 +90,7 @@ RTLIB_ExitCode_t PeopleDetect::onSetup()
              << "'" << endl;
         return RTLIB_EXC_WORKLOAD_NONE;
     }
-    SetCPSGoal(0.2, 6.0);
+    SetCPSGoal(0.2, target_cps_);
 
     cout << "Press 'q' or <ESC> to quit." << endl;
     cout << "Press <space> to toggle between Default and Daimler detector" << endl;
@@ -145,7 +154,7 @@ void PeopleDetect::show_frame(vector<Rect> &found, int64 elapsed_ticks)
     ostringstream buf;
     buf << "Mode: " << detector_.modeName() << " ||| "
         << "Stride " << detector_.stride() << " ||| "
-        << "Scale " << fixed << setprecision(1) << detector_.scale() << " ||| "
+        << "Scale " << fixed << setprecision(2) << detector_.scale() << " ||| "
         << "MS/FRAME: " << fixed << setprecision(1) << elapsed_millis;
         //<< "FPS: " << fixed << setprecision(1) << (getTickFrequency() / (double)elapsed_ticks);
     putText(frame_, buf.str(), Point(10, 30), FONT_HERSHEY_PLAIN, 2.0, Scalar(0, 0, 255), 2, LINE_AA);
@@ -192,11 +201,12 @@ RTLIB_ExitCode_t PeopleDetect::onMonitor()
 {
     static int ncalls = 0;
 
-    ++ncalls;
     double cps = GetCPS();
     cout << "PeopleDetect::onMonitor(): CPS=" << cps << endl;
-    if (ncalls < 10)
+
+    if (++ncalls < 10)
         return RTLIB_OK;
+#if 1
     if (cps < target_cps_ / 2) {
         if (detector_.mode() == Detector::Daimler) {
             detector_.set_mode(Detector::Default);
@@ -205,20 +215,24 @@ RTLIB_ExitCode_t PeopleDetect::onMonitor()
             return RTLIB_OK;
         }
     }
+#endif
     if (cps < target_cps_) {
-//        if (detector_.stride() == 8) {
-//            detector_.set_stride(16);
-//            ncalls = 0;
-//            cout << "PeopleDetect::onMonitor(): stride 16\n";
-//            return RTLIB_OK;
-//        }
-        if (detector_.scale() < 1.8) {
-            double newscale = detector_.scale() + 0.1;
-            detector_.set_scale(newscale);
+#if 0
+        if (detector_.stride() == 8) {
+            detector_.set_stride(12);
             ncalls = 0;
-            cout << "PeopleDetect::onMonitor(): scale " << newscale << endl;
+            cout << "PeopleDetect::onMonitor(): stride" << detector_.stride() << "\n";
             return RTLIB_OK;
         }
+#endif
+#if 1
+        if (detector_.scale() < 1.4) {
+            detector_.set_scale(detector_.scale() + 0.05);
+            ncalls = 0;
+            cout << "PeopleDetect::onMonitor(): scale " << detector_.scale() << endl;
+            return RTLIB_OK;
+        }
+#endif
 
     }
     return RTLIB_OK;
