@@ -11,8 +11,12 @@
 #include <string>
 
 class Detector {
+public:
     enum Mode { Default, Daimler } m;
+private:
     cv::HOGDescriptor hog, hog_d;
+    int stride_;
+    double scale_;
 public:
     Detector();
     void toggleMode() { m = (m == Default ? Daimler : Default); }
@@ -20,6 +24,15 @@ public:
 
     std::vector<cv::Rect> detect(cv::InputArray &img);
     void adjustRect(cv::Rect & r) const;
+
+    Mode mode() const { return m; }
+    void set_mode(Mode newmode) { m = newmode; }
+
+    int stride() const { return stride_; }
+    void set_stride(int newstride) { stride_ = newstride; }
+
+    double scale() const { return scale_; }
+    void set_scale(double newscale) { scale_ = newscale; }
 };
 
 class PeopleDetect : public bbque::rtlib::BbqueEXC {
@@ -28,6 +41,7 @@ class PeopleDetect : public bbque::rtlib::BbqueEXC {
     int camera_;
     Detector detector_;
     cv::Mat frame_;
+    double target_cps_;
 
     void show_frame(std::vector<cv::Rect> &found, int64 elapsed_ticks);
 

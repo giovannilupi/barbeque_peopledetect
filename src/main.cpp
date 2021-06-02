@@ -1,6 +1,9 @@
 // This file is part of OpenCV project.
 // It is subject to the license terms in the LICENSE file found in the top-level directory
 // of this distribution and at http://opencv.org/license.html
+//
+// Example:
+//  peopledetect --video=/home/giovanni/Work/BOSP-devel/peopledetect/peopledetect.bbque/resources/sample2.mp4
 
 #include <opencv2/core/utility.hpp>
 #include <opencv2/objdetect.hpp>

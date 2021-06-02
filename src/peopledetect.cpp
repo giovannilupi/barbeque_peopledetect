@@ -6,7 +6,12 @@
 using namespace cv;
 using namespace std;
 
-Detector::Detector() : m(Default), hog(), hog_d(Size(48, 96), Size(16, 16), Size(8, 8), Size(8, 8), 9)
+Detector::Detector() :
+    m(Default),
+    hog(),
+    hog_d(Size(48, 96),Size(16, 16), Size(8, 8), Size(8, 8), 9),
+    stride_(8),
+    scale_(1.05)
 {
     hog.setSVMDetector(HOGDescriptor::getDefaultPeopleDetector());
     hog_d.setSVMDetector(HOGDescriptor::getDaimlerPeopleDetector());
@@ -18,10 +23,17 @@ vector<Rect> Detector::detect(InputArray &img)
     // (and more false alarms, respectively), decrease the hitThreshold and
     // groupThreshold (set groupThreshold to 0 to turn off the grouping completely).
     vector<Rect> found;
+#if 0
     if (m == Default)
         hog.detectMultiScale(img, found, 0, Size(8,8), Size(), 1.05, 2, false);
     else if (m == Daimler)
         hog_d.detectMultiScale(img, found, 0, Size(8,8), Size(), 1.05, 2, true);
+#else
+    if (m == Default)
+        hog.detectMultiScale(img, found, 0, Size(stride_,stride_), Size(), scale_, 2, false);
+    else if (m == Daimler)
+        hog_d.detectMultiScale(img, found, 0, Size(stride_,stride_), Size(), scale_, 2, true);
+#endif
     return found;
 }
 
@@ -42,7 +54,8 @@ PeopleDetect::PeopleDetect(std::string const &name,
                            std::string filename) :
     BbqueEXC(name, recipe, rtlib, RTLIB_LANG_CPP),
     camera_(camera),
-    filename_(filename)
+    filename_(filename),
+    target_cps_(6.0)
 {
 }
 
@@ -68,6 +81,8 @@ RTLIB_ExitCode_t PeopleDetect::onSetup()
              << "'" << endl;
         return RTLIB_EXC_WORKLOAD_NONE;
     }
+    SetCPSGoal(0.2, 6.0);
+
     cout << "Press 'q' or <ESC> to quit." << endl;
     cout << "Press <space> to toggle between Default and Daimler detector" << endl;
     return RTLIB_OK;
@@ -109,6 +124,17 @@ RTLIB_ExitCode_t PeopleDetect::onConfigure(int8_t awm_id)
     cout << "PeopleDetect::onConfigure(): acc= " << acc << endl;
     cout << "PeopleDetect::onConfigure(): gpu= " << gpu << endl;
     cout << "PeopleDetect::onConfigure(): memory= " << mem << endl;
+#if 0
+    RTLIB_Constraint_t constraint;
+    constraint.awm = awm_id;
+    constraint.operation = CONSTRAINT_ADD;
+    constraint.type = UPPER_BOUND;
+    RTLIB_ExitCode_t ec = SetAWMConstraints(&constraint, 1);
+    if (ec == RTLIB_OK)
+        cout << "SetAWMConstraints OK\n";
+    else
+        cerr << "SetAWMConstraints failed with error " << ec << endl;
+#endif
     return RTLIB_OK;
 }
 
@@ -118,6 +144,8 @@ void PeopleDetect::show_frame(vector<Rect> &found, int64 elapsed_ticks)
 
     ostringstream buf;
     buf << "Mode: " << detector_.modeName() << " ||| "
+        << "Stride " << detector_.stride() << " ||| "
+        << "Scale " << fixed << setprecision(1) << detector_.scale() << " ||| "
         << "MS/FRAME: " << fixed << setprecision(1) << elapsed_millis;
         //<< "FPS: " << fixed << setprecision(1) << (getTickFrequency() / (double)elapsed_ticks);
     putText(frame_, buf.str(), Point(10, 30), FONT_HERSHEY_PLAIN, 2.0, Scalar(0, 0, 255), 2, LINE_AA);
@@ -162,7 +190,37 @@ RTLIB_ExitCode_t PeopleDetect::onRun()
 
 RTLIB_ExitCode_t PeopleDetect::onMonitor()
 {
-    cout << "PeopleDetect::onMonitor(): CPS=" << GetCPS() << endl;
+    static int ncalls = 0;
+
+    ++ncalls;
+    double cps = GetCPS();
+    cout << "PeopleDetect::onMonitor(): CPS=" << cps << endl;
+    if (ncalls < 10)
+        return RTLIB_OK;
+    if (cps < target_cps_ / 2) {
+        if (detector_.mode() == Detector::Daimler) {
+            detector_.set_mode(Detector::Default);
+            ncalls = 0;
+            cout << "PeopleDetect::onMonitor(): mode Default\n";
+            return RTLIB_OK;
+        }
+    }
+    if (cps < target_cps_) {
+//        if (detector_.stride() == 8) {
+//            detector_.set_stride(16);
+//            ncalls = 0;
+//            cout << "PeopleDetect::onMonitor(): stride 16\n";
+//            return RTLIB_OK;
+//        }
+        if (detector_.scale() < 1.8) {
+            double newscale = detector_.scale() + 0.1;
+            detector_.set_scale(newscale);
+            ncalls = 0;
+            cout << "PeopleDetect::onMonitor(): scale " << newscale << endl;
+            return RTLIB_OK;
+        }
+
+    }
     return RTLIB_OK;
 }
 
