@@ -43,6 +43,7 @@ class PeopleDetect : public bbque::rtlib::BbqueEXC {
     Detector detector_;
     cv::Mat frame_;
     double target_cps_;
+    bool snapshot_;
 
     void show_frame(std::vector<cv::Rect> &found, int64 elapsed_ticks);
 
@@ -50,7 +51,8 @@ public:
     PeopleDetect(std::string const &name,
                  std::string const &recipe,
                  RTLIB_Services_t *rtlib,
-                 int camera, std::string filename);
+                 int camera, std::string filename,
+                 double target_cps = 5.0);
     virtual ~PeopleDetect();
     virtual RTLIB_ExitCode_t onSetup() override;
     virtual RTLIB_ExitCode_t onConfigure(int8_t awm_id) override;

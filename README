@@ -1,0 +1,12 @@
+https://docs.opencv.org/master/examples.html
+
+peopledetect
+
+libopencv-imgproc-dev
+Dipende da:
+	libopencv-core-dev
+	libopencv-core3.2
+	libopencv-imgproc3.2
+	libtbb-dev
+	libtbb2			(parallellism library)
+	zlib1g-dev

@@ -23,12 +23,7 @@ vector<Rect> Detector::detect(InputArray &img)
     // (and more false alarms, respectively), decrease the hitThreshold and
     // groupThreshold (set groupThreshold to 0 to turn off the grouping completely).
     vector<Rect> found;
-#if 0
-    if (m == Default)
-        hog.detectMultiScale(img, found, 0, Size(8,8), Size(), 1.05, 2, false);
-    else if (m == Daimler)
-        hog_d.detectMultiScale(img, found, 0, Size(8,8), Size(), 1.05, 2, true);
-#else
+
     // Note:
     // - the smaller winStride is, the more windows need to be evaluated
     // - the larger winStride is the less windows need to be evaluated, but
@@ -37,12 +32,15 @@ vector<Rect> Detector::detect(InputArray &img)
     // - a smaller scale will increase the number of layers in the image pyramid
     //   and increase the amount of time it takes to process the image
     // - Typical values for scale are normally in the range [1.01, 1.5]
+    //
+    // The original parameters are:
+    //   hog_d.detectMultiScale(img, found, 0, Size(8,8), Size(), 1.05, 2, true);
 
     if (m == Default)
         hog.detectMultiScale(img, found, 0, Size(stride_,stride_), Size(), scale_, 2, false);
     else if (m == Daimler)
         hog_d.detectMultiScale(img, found, 0, Size(stride_,stride_), Size(), scale_, 2, true);
-#endif
+
     return found;
 }
 
@@ -60,11 +58,13 @@ PeopleDetect::PeopleDetect(std::string const &name,
                            std::string const &recipe,
                            RTLIB_Services_t *rtlib,
                            int camera,
-                           std::string filename) :
+                           std::string filename,
+                           double target_cps) :
     BbqueEXC(name, recipe, rtlib, RTLIB_LANG_CPP),
     camera_(camera),
     filename_(filename),
-    target_cps_(6.0)
+    target_cps_(target_cps),
+    snapshot_(true)
 {
 }
 
@@ -166,6 +166,13 @@ void PeopleDetect::show_frame(vector<Rect> &found, int64 elapsed_ticks)
         rectangle(frame_, r.tl(), r.br(), cv::Scalar(255, 0, 0), 2);
     }
 
+    if (snapshot_) {
+        static int n = 0;
+        char filename[32];
+        sprintf(filename, "peopledetect-%04d.png", ++n);
+        imwrite(filename, frame_);
+        snapshot_= false;
+    }
     imshow("People detector", frame_);
 }
 
@@ -204,14 +211,15 @@ RTLIB_ExitCode_t PeopleDetect::onMonitor()
     double cps = GetCPS();
     cout << "PeopleDetect::onMonitor(): CPS=" << cps << endl;
 
-    if (++ncalls < 10)
+    if (++ncalls < 16)
         return RTLIB_OK;
 #if 1
-    if (cps < target_cps_ / 2) {
+    if (cps < target_cps_ / 3) {
         if (detector_.mode() == Detector::Daimler) {
             detector_.set_mode(Detector::Default);
             ncalls = 0;
             cout << "PeopleDetect::onMonitor(): mode Default\n";
+            snapshot_ = true;
             return RTLIB_OK;
         }
     }
@@ -219,21 +227,22 @@ RTLIB_ExitCode_t PeopleDetect::onMonitor()
     if (cps < target_cps_) {
 #if 0
         if (detector_.stride() == 8) {
-            detector_.set_stride(12);
+            detector_.set_stride(16);
             ncalls = 0;
             cout << "PeopleDetect::onMonitor(): stride" << detector_.stride() << "\n";
+            snapshot_ = true;
             return RTLIB_OK;
         }
 #endif
 #if 1
         if (detector_.scale() < 1.4) {
-            detector_.set_scale(detector_.scale() + 0.05);
+            detector_.set_scale(detector_.scale() + 0.02);
             ncalls = 0;
             cout << "PeopleDetect::onMonitor(): scale " << detector_.scale() << endl;
+            snapshot_ = true;
             return RTLIB_OK;
         }
 #endif
-
     }
     return RTLIB_OK;
 }
